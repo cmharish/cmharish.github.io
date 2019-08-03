@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Time Use</title>
+	<link rel="stylesheet" href="style/style.css" type="text/css" media="screen" />
+	<link rel="stylesheet" href="style/skeleton-2.css" type="text/css" media="screen" />
+	<!-- <link rel="stylesheet" href="style/area.css" type="text/css" media="screen" /> -->
+	<script type="text/javascript" src="js/pym.js"></script>
+	<script type="text/javascript" src="js/d3-3-5-5.js"></script>
+	<!--script src="http://d3js.org/d3.v3.min.js"></script> -->
+	<script type="text/javascript" src="js/d3.slider.js"></script>
+
+</head>
+
+<body>
+		<div>
+			<h1 class="heading">What do people do at various time of the day ? 
+			</h1>
+		</div>
+
+	<div id="main-wrapper">
+		
+		<div id="controls">
+				
+			<div>
+					
+
+				<div class="sentence">On an average day &nbsp;&nbsp;</div>
+				<div class="sentence">
+							<button onclick="play()" class="playbtn"> 
+								<img src="style/play2.png" height="100%"/>
+							</button>
+							
+				</div>
+				
+				<div id="time">
+					<div id="timevalue"></div>
+					<div id="timeslider" class="sliderholder"></div>
+				</div>
+				<div class="sentence">this percentage of&nbsp;</div>
+				<div id="sex" class="dropdown-wrapper" , tabindex="1" style="float:left;z-index:10">
+					<span>Sex</span>
+					<ul class="dropdown"></ul>
+				</div>
+				<div class="sentence">in age group &nbsp;</div>
+				<div id="agegrp" class="dropdown-wrapper" , tabindex="2" style="float:left;z-index:9">
+					<span>Age</span>
+					<ul class="dropdown"></ul>
+				</div>
+				<div class="sentence">did the below activities </div>
+				<div class="clr"></div>
+			</div>
+		</div>
+		
+		<div id="note">&nbsp</div>
+		
+		<div id="chart">
+
+		</div>
+		<div class="footer">
+				<p>Source: U.S. Bureau Of Labor Statistics, American Time Use Survey</p>
+		</div>
+	</div>
+</body>
+<style type="text/css">
+	.playbtn{
+		padding: 0px;
+		width: 50px;
+  		height: 37px;
+		cursor:pointer;
+		border: none;
+	}
+</style>
+<script>
+	// the data
+	var data_loc = "data/atus_halfhr.csv";
+	var activity_descriptions = {
+		"010000": "Personal Care",
+		"010101": "Sleeping",
+		"020000": "Household Activities",
+		"030000": "Caring for Household Members",
+		"040000": "Caring for Non-Household Members",
+		"050000": "Work and Work-Related Activities",
+		"060000": "Education",
+		"070000": "Shopping",
+		"080000": "Professional and Personal Care Services",
+		"090000": "Household Services",
+		"100000": "Government Services and Civic Obligations",
+		"110000": "Eating and Drinking",
+		"120000": "Socializing, Relaxing or Leisure",
+		"130000": "Sports, Exercise or Recreation",
+		"140000": "Religious or Spiritual Activities",
+		"150000": "Volunteer Activities",
+		"160000": "Phone Calls",
+		"180000": "Traveling",
+		"500000": "Data Codes",
+		"500105": "Respondent refused to provide information",
+		"500106": "Gap or Can't remember",
+		"other": "Other Activity"
+	}
+	var sexes = {
+		"female": "females",
+		"male": "males",
+	};
+	var agegrps = {
+		"0": "15 to 24",
+		"1": "25 to 34",
+		"2": "35 to 44",
+		"3": "45 to 54",
+		"4": "55 to 64",
+		"5": "65+",
+	};
+	var days = {
+		"weekday": "weekday",
+		"weekend": "Sat/Sun"
+	}
+
+	var time_notes = {
+		"0": "Most people are sleeping at midnight.",
+		"1": "Most people are still sleeping this early in the morning.",
+		"2": "Most people are still sleeping this early in the morning.",
+		"3": "Most people are still sleeping this early in the morning.",
+		"4": "Most people are still sleeping this early in the morning.",
+		"5": "Peak sleeping time for most people.",
+		"6": "Peak sleeping time for most people.",
+		"7": "Peak sleeping time for most people.",
+		"8": "Most are still sleeping, but some are already preparing or started working.",
+		"9": "Most are still sleeping, but some are already preparing or started working.",
+		"10": "Most are still sleeping, but some are already preparing or started working.",
+		"11": "Most are still sleeping, but more people have started to work.",
+		"12": "Most are still sleeping, but more people have woken up by 6AM.",
+		"13": "Most are still sleeping, even more people have woken up by 6.30AM.",
+		"14": "It's wake up time for most. Time to start the day with morning rituals, breakfast and commute.",
+		"15": "It's wake up time for most. Time to start the day with morning rituals, breakfast and commute.",
+		"16": "By 8AM most of them are awake. Time to start the day with morning rituals, breakfast and commute.",
+		"17": "By 8.30AM most of them are awake and day is getting to full swing as most people are at work.",
+		"18": "By 8.30AM most of them are awake and day is getting to full swing as most people are at work.",
+		"19": "The day is in full swing with work or housework.",
+		"20": "The day is in full swing with work or housework.",
+		"21": "The day is in full swing with work or housework.",
+		"22": "Some are at a coffee break and socializing, The day is busy work or housework.",
+		"23": "The day is in full swing with work or housework.",
+		"24": "Lunch hour. Many go eat.",
+		"25": "Lunch hour. Many go eat.",
+		"26": "People are back to work after lunch.",
+		"27": "People are back to work after lunch.",
+		"28": "Some are at a coffee break and socializing, The day is busy at work or housework.",
+		"29": "Some are at a coffee break and socializing, The day is busy at work or housework.",
+		"30": "Some are at a coffee break and socializing, The day is busy at work or housework.",
+		"31": "The day is busy at work or housework.",
+		"32": "Work day is winding up.",
+		"33": "With the work day done, it's time to commute home or go out for a while.",
+		"34": "With the work day done, people are socializing or have leisure time.",
+		"35": "With the work day done, people are socializing or have leisure time.",
+		"36": "With the work day done, people are socializing or have leisure time.",
+		"37": "Lot of people are socializing or have leisure time. It's dinner time for some.",
+		"38": "Lot of people are socializing or have leisure time. It's dinner time for some.",
+		"39": "Lot of people are socializing or have leisure time. It's dinner time for some.",
+		"40": "Lot of people are socializing or have leisure time. Some are taking care of household work.",
+		"41": "Lot of people are socializing or have leisure time. Some are taking care of household work.",
+		"42": "Lot of people are socializing or have leisure time. Some are taking care of household work, some are ready to sleep.",
+		"43": "Lot of people are socializing or have leisure time. Some are doing personal care and some are asleep.",
+		"44": "A lot of them are asleep by 10PM.",
+		"45": "Most of them are asleep by 10.30PM.",
+		"46": "Most of them are asleep by 11.00PM.",
+		"47": "Most of them are asleep by 11.30PM"
+	};
+
+
+	// Data storage for easier access
+	var pctsByKey = [];
+	var curr_pcts;
+
+	// User settings
+	var USER_SEX = 'female';
+	var USER_AGEGRP = '1';
+	// var USER_DAY = 'weekday';
+	var USER_KEY = USER_SEX + USER_AGEGRP
+
+	var now = new Date();
+	var now_bin = now.getHours() * 2; // bin number, 30-minute bins
+	if (now.getMinutes() >= 30) {
+		now_bin += 1;
+	}
+
+	var USER_TIME = now_bin;
+
+	var margin = { top: 50, right: 50, bottom: 50, left: 50 },
+		width = parseInt(d3.select('#chart').style('width'), 10),
+		width = width - margin.left - margin.right,
+		height = 600, // Will change.
+		barHeight = 25,
+		spacing = 10,
+		percent = d3.format('%'),
+		index,
+		bars;
+
+	var note = d3.select("#note")
+		.style('margin-left', '50px')
+		.style('font-color','red')
+		.style('left', (width + margin.left + margin.right) + 'px')
+		.transition()
+		.duration(250)
+		.style("color", "#000000")
+		.text(time_notes[USER_TIME]);
+
+	// scales and axes
+	var x = d3.scale.linear()
+		.range([0, width])
+		.domain([0, 1]); // hard-coding this because I know the data
+
+	// ordinal scales are easier for uniform bar heights
+	// I'll set domain and rangeBands after data loads
+	var y = d3.scale.ordinal();
+
+	var xAxis = d3.svg.axis()
+		.scale(x)
+		.tickFormat(percent)
+		.innerTickSize(8)
+		.tickPadding(5);
+
+	// create the chart
+	var chart = d3.select('#chart').append('svg')
+		.style('width', (width + margin.left + margin.right) + 'px')
+		.append('g')
+		.attr('transform', 'translate(' + [margin.left, margin.top] + ')');
+
+	// controls
+	var time_slider = d3.slider().min(0).max(47).ticks(0).stepValues(d3.range(0, 48)).value(USER_TIME);
+	time_slider.callback(brushed);
+	// time_slider.drag = play(USER_TIME);
+	
+	var tooltip = d3.select("body")
+		.append("div")
+		.style("position", "absolute")
+		.style("z-index", "10")
+		.style("visibility", "hidden");
+
+
+	d3.csv(data_loc, typeAndSet, function (error, data) {
+
+		// Sex dropdown menu
+		var dropdown_sex = d3.select("#controls #sex");
+		dropdown_sex.select("span").text(sexes[USER_SEX]);
+		dropdown_sex.on("click", function () {
+			d3.select(this).classed("active", !d3.select(this).classed("active"));
+		});
+		var dropdown_sex_li = dropdown_sex.select(".dropdown").selectAll("li")
+			.data(Object.keys(sexes))
+			.enter().append("li")
+			.attr("id", function (d) { return d; })
+			.classed("current", function (d) { return d == USER_SEX ? true : false; })
+			.text(function (d) { return sexes[d]; });
+		dropdown_sex_li.on("click", function (d) {
+			d3.select("#sex span").text(sexes[d]);
+			d3.select(this).classed("current", true); // Hide currently selected metric from menu
+			d3.select("#sex #" + USER_SEX).classed("current", false);   // Show previously hidden 
+
+			USER_SEX = d;
+			USER_KEY = USER_SEX + USER_AGEGRP;
+			sex_changed = true;
+			update();
+		});
+
+
+		// Age dropdown menu
+		var dropdown_age = d3.select("#controls #agegrp");
+		dropdown_age.select("span").text(agegrps[USER_AGEGRP]);
+		dropdown_age.on("click", function () {
+			d3.select(this).classed("active", !d3.select(this).classed("active"));
+		});
+		var dropdown_age_li = dropdown_age.select(".dropdown").selectAll("li")
+			.data(Object.keys(agegrps))
+			.enter().append("li")
+			.attr("id", function (d) { return "a" + d; })
+			.classed("current", function (d) { return d == USER_AGEGRP ? true : false; })
+			.text(function (d) { return agegrps[d]; });
+		dropdown_age_li.on("click", function (d) {
+			d3.select("#agegrp span").text(agegrps[d]);
+			d3.select(this).classed("current", true); // Hide currently selected metric from menu
+			d3.select("#agegrp #a" + USER_AGEGRP).classed("current", false);   // Show previously hidden 
+
+			USER_AGEGRP = d;
+			USER_KEY = USER_SEX + USER_AGEGRP;
+			sex_changed = true;
+			update();
+		
+		});
+
+
+
+		y.domain(d3.range(pctsByKey[USER_KEY].length))
+			.rangeBands([0, pctsByKey[USER_KEY].length * barHeight]);
+
+		index = d3.range(pctsByKey[USER_KEY].length);
+
+		// controls
+		d3.select("#timeslider").call(time_slider);
+		d3.select("#timevalue").text(binNumberToWords(USER_TIME));
+
+		// set height based on data
+		height = y.rangeExtent()[1];
+		d3.select(chart.node().parentNode)
+			.style('height', (height + margin.top + margin.bottom) + 'px')
+
+		// add top and bottom axes
+		chart.append('g')
+			.attr('class', 'x axis top')
+			.call(xAxis.orient('top'));
+
+		chart.append('g')
+			.attr('class', 'x axis bottom')
+			.attr('transform', 'translate(0,' + height + ')')
+			.call(xAxis.orient('bottom'));
+
+		bars = chart.selectAll('.bar')
+			.data(pctsByKey[USER_KEY])
+			.enter().append('g')
+			.attr('class', 'bar')
+			.attr('transform', function (d, i) { return 'translate(0,' + y(i) + ')'; });
+
+		var gradient = bars.append("defs")
+			.append("linearGradient")
+			.attr("id", "gradient")
+			.attr("x1", "0%")
+			.attr("y1", "100%")
+			.attr("x2", "100%")
+			.attr("y2", "100%")
+			.attr("spreadMethod", "pad");
+
+		gradient.append("stop")
+			.attr("offset", "0%")
+			.attr("stop-color", "#f7fcf0")
+			.attr("stop-opacity", 1);
+
+		gradient.append("stop")
+			.attr("offset", "33%")
+			.attr("stop-color", "#bae4bc")
+			.attr("stop-opacity", 1);
+		
+		gradient.append("stop")
+			.attr("offset", "66%")
+			.attr("stop-color", "#7bccc4")
+			.attr("stop-opacity", 1);
+
+		gradient.append("stop")
+			.attr("offset", "100%")
+			.attr("stop-color", "#7bccc5")
+			.attr("stop-opacity", 1);
+
+		bars.append('rect')
+			.attr('class', 'background')
+			.attr('height', y.rangeBand())
+			.attr('width', width)
+			.on("mousemove", function () { return tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px"); })
+			.on("mouseout", function () { return tooltip.style("visibility", "hidden"); })
+			.on("mouseover", mouseover);
+
+		bars.append('rect')
+			.attr('class', 'percent')
+			.style("fill", "url(#gradient)")
+			.style("stroke", "url(#gradient)")
+			// .style('fill',colorScale(function (d) { return x(d["b" + USER_TIME]); }))
+			.attr('height', y.rangeBand())
+			.attr('width', function (d) { return x(d["b" + USER_TIME]); })
+			/*.on("mouseover", function () { return tooltip.style("visibility", "visible"); })*/
+			.on("mousemove", function () { return tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px"); })
+			.on("mouseout", function () { return tooltip.style("visibility", "hidden"); })
+			.on("mouseover", mouseover);
+		/*.on("mouseout", mouseout)
+		.on("click", selected);*/
+
+		bars.append('text')
+			.text(function (d) { return activity_descriptions[d.activity]; })
+			.attr('class', 'name')
+			.attr('y', y.rangeBand() - 8)
+			.attr('x', spacing);
+
+
+		update();
+
+		var pymChild = new pym.Child();
+
+	}); // @end d3.csv()
+
+	var clicked = false;
+	function play() {
+		if (clicked == false) {
+			clicked = true;
+			for (let i = 0; i <= 47; i++) {
+				setTimeout(function timer() {
+
+					USER_TIME = i;
+					time_slider.destroy();
+
+					d3.select("#timeslider").call(time_slider);
+					time_slider.value(USER_TIME);
+					d3.select("#timevalue").text(binNumberToWords(USER_TIME));
+					update();
+				}, i * 2000);
+			}
+			clicked = false;
+		}
+	}
+
+	function mouseover(d) {
+		tooltip.style("visibility", "visible");
+	
+		tooltip.text(parseFloat(d["b" + USER_TIME]*100).toFixed(2) + "%")
+			.style("left", (d3.event.pageX + 50) + "px")
+			.style("top", (d3.event.pageY - 50) + "px");
+			
+
+		tooltip.append("svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+			.attr("transform",
+				"translate(" + margin.left + "," + margin.top + ")");
+
+	}
+
+	function brushed() {
+		USER_TIME = time_slider.value();
+		d3.select("#timevalue").text(binNumberToWords(USER_TIME));
+
+		update();
+	}
+
+
+	function update() {
+
+		// Update bar lengths
+		chart.selectAll('.bar')
+			.data(pctsByKey[USER_KEY])
+			.select(".percent")
+			.transition()
+			.duration(250)
+			.attr('width', function (d) { return x(d["b" + USER_TIME]); })
+			.each("end", updateOrder);
+
+		d3.select("#note")
+			.style('left', (margin.left + margin.right) + 'px')
+			.style("color", "#000000")
+			.text(time_notes[USER_TIME]);
+
+	}
+
+
+	function updateOrder() {
+
+		curr_pcts = pctsByKey[USER_KEY].map(function (d) { return d['b' + USER_TIME] });
+
+		index.sort(function (a, b) { return curr_pcts[b] - curr_pcts[a]; });
+
+		y.domain(index);
+
+		bars.transition()
+			.duration(600)
+			.delay(function (d, i) { return i * 30 })
+			.attr('transform', function (d, i) { return 'translate(0,' + y(i) + ')'; });
+
+	}
+
+	d3.select(window).on('resize', resize);
+
+	function resize() {
+		// update width
+		width = parseInt(d3.select('#chart').style('width'), 10);
+		width = width - margin.left - margin.right;
+
+		// resize the chart
+		x.range([0, width]);
+		d3.select(chart.node().parentNode)
+			.style('height', (y.rangeExtent()[1] + margin.top + margin.bottom) + 'px')
+			.style('width', (width + margin.left + margin.right) + 'px');
+
+		chart.selectAll('rect.background')
+			.attr('width', width);
+
+		chart.selectAll('rect.percent')
+			.attr('width', function (d) { return x(d['b' + USER_TIME]); });
+
+		// update axes
+		chart.select('.x.axis.top').call(xAxis.orient('top'));
+		chart.select('.x.axis.bottom').call(xAxis.orient('bottom'));
+	}
+
+
+	// Convert bin numbers 0 to 47 to time segments in words
+	function binNumberToWords(bin_num) {
+
+		var hour = Math.floor(bin_num / 2);
+		if (bin_num == now_bin) {
+			return 'Right Now';
+		} else if (hour > 12) {
+			ampm_start = "pm";
+			ampm_finish = "pm";
+			hour -= 12;
+		} else if (hour == 0) {
+			ampm_start = "am";
+			ampm_finish = "am";
+			hour = 12;
+		} else if (hour == 12) {
+			ampm_start = "pm";
+			ampm_finish = "pm";
+		} else {
+			ampm_start = "am";
+			ampm_finish = "am";
+		}
+		var remainder = bin_num % 2;
+		if (remainder > 0) {
+			var time_span = hour + ":30" + ampm_start + "-" + hour + ":59" + ampm_finish;
+		} else {
+			var time_span = hour + ":00" + ampm_start + "-" + hour + ":29" + ampm_finish;
+		}
+
+		return time_span;
+	}
+
+
+
+	function typeAndSet(d) {
+		for (property in d) {
+			if (property != "sex" && property != "agegrp" && property != "activity") {
+				d[property] = +d[property]
+			}
+		}
+		var key = d.sex + d.agegrp;
+		if (!pctsByKey.hasOwnProperty(key)) {
+			pctsByKey[key] = [];
+		}
+		pctsByKey[key].push(d);
+
+		return d;
+	}
+
+
+</script>
+
+</html>
