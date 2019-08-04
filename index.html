@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Time Use</title>
+	<title>Harishc4</title>
 	<link rel="stylesheet" href="style/style.css" type="text/css" media="screen" />
 	<link rel="stylesheet" href="style/skeleton-2.css" type="text/css" media="screen" />
 	<script type="text/javascript" src="js/pym.js"></script>
@@ -20,7 +20,12 @@
 		</div>
 
 	<div id="main-wrapper">
-		
+		<div id="tip" style="padding-left:50px;color:#0b75b3;font-size: 12px" class="sentence">
+			<p>Click the Play button to play out the day, or use the slider to select desired time window.</p>
+			<p>Click the slider to stop the play</p>
+			<p>Use the drop down to select Sex and Age group you are interested in.</p>
+			<p>Hover over the bar chart to see the % value for the activity.</p>
+		</div>
 		<div id="controls">
 				
 			<div>
@@ -52,7 +57,7 @@
 				<div class="clr"></div>
 			</div>
 		</div>
-		
+
 		<div id="note" style="color:#7bccc5">&nbsp</div>
 		
 		<div id="chart">
@@ -458,8 +463,8 @@
 
 		d3.select("#note")
 			.style('left', (margin.left + margin.right) + 'px')
-			.style("color", "#000000")
-			.text(time_notes[USER_TIME]);
+			.style("color", "grey")
+			.html(time_notes[USER_TIME]);
 
 	}
 
