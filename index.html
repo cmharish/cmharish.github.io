@@ -6,10 +6,9 @@
 	<title>Time Use</title>
 	<link rel="stylesheet" href="style/style.css" type="text/css" media="screen" />
 	<link rel="stylesheet" href="style/skeleton-2.css" type="text/css" media="screen" />
-	<!-- <link rel="stylesheet" href="style/area.css" type="text/css" media="screen" /> -->
 	<script type="text/javascript" src="js/pym.js"></script>
 	<script type="text/javascript" src="js/d3-3-5-5.js"></script>
-	<!--script src="http://d3js.org/d3.v3.min.js"></script> -->
+
 	<script type="text/javascript" src="js/d3.slider.js"></script>
 
 </head>
@@ -29,7 +28,7 @@
 
 				<div class="sentence">On an average day &nbsp;</div>
 				<div class="sentence">
-						<button onclick="play();" class="playbtn" title="Play the day, click slider to pause"> 
+						<button onclick="play();" class="playbtn" title="Play the day, click slider to Stop"> 
 							<img src="style/play2.png" height="100%"/>
 						</button>
 							
@@ -54,14 +53,14 @@
 			</div>
 		</div>
 		
-		<div id="note">&nbsp</div>
+		<div id="note" style="color:#7bccc5">&nbsp</div>
 		
 		<div id="chart">
 
 		</div>
 		<div class="footer">
 				<p>Data Source: U.S. Bureau Of Labor Statistics, American Time Use Survey</p>
-				<p>By: Harish Chandramohan - harishc4@illinois.edu</p>
+				<p>Harish Chandramohan - harishc4@illinois.edu</p>
 		</div>
 	</div>
 </body>
@@ -330,23 +329,25 @@
 
 		gradient.append("stop")
 			.attr("offset", "0%")
-			.attr("stop-color", "#f7fcf0")
+			.attr("stop-color", "grey")
 			.attr("stop-opacity", 1);
 
 		gradient.append("stop")
 			.attr("offset", "33%")
-			.attr("stop-color", "#bae4bc")
+			.attr("stop-color", "grey")
 			.attr("stop-opacity", 1);
 		
 		gradient.append("stop")
 			.attr("offset", "66%")
-			.attr("stop-color", "#7bccc4")
+			.attr("stop-color", "grey")
 			.attr("stop-opacity", 1);
 
 		gradient.append("stop")
 			.attr("offset", "100%")
-			.attr("stop-color", "#7bccc5")
+			.attr("stop-color", "white")
 			.attr("stop-opacity", 1);
+
+		var colorscale = d3.scale.category20c();
 
 		bars.append('rect')
 			.attr('class', 'background')
@@ -358,8 +359,8 @@
 
 		bars.append('rect')
 			.attr('class', 'percent')
-			.style("fill", "url(#gradient)")
-			.style("stroke", "grey")
+			.style("fill", function (d,i) { return colorscale(i);})
+			.style("stroke", "url(#gradient)")
 			.attr('height', y.rangeBand())
 			.attr('width', function (d) { return x(d["b" + USER_TIME]); })
 			/*.on("mouseover", function () { return tooltip.style("visibility", "visible"); })*/
