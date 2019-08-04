@@ -27,17 +27,17 @@
 			<div>
 					
 
-				<div class="sentence">On an average day &nbsp;&nbsp;</div>
+				<div class="sentence">On an average day &nbsp;</div>
 				<div class="sentence">
-							<button onclick="play()" class="playbtn"> 
-								<img src="style/play2.png" height="100%"/>
-							</button>
+						<button onclick="play();" class="playbtn" title="Play the day, click slider to pause"> 
+							<img src="style/play2.png" height="100%"/>
+						</button>
 							
 				</div>
 				
-				<div id="time">
+				<div id="time" onclick="pause();">
 					<div id="timevalue"></div>
-					<div id="timeslider" class="sliderholder"></div>
+					<div id="timeslider" class="sliderholder" ></div>
 				</div>
 				<div class="sentence">this percentage of&nbsp;</div>
 				<div id="sex" class="dropdown-wrapper" , tabindex="1" style="float:left;z-index:10">
@@ -60,7 +60,8 @@
 
 		</div>
 		<div class="footer">
-				<p>Source: U.S. Bureau Of Labor Statistics, American Time Use Survey</p>
+				<p>Data Source: U.S. Bureau Of Labor Statistics, American Time Use Survey</p>
+				<p>By: Harish Chandramohan - harishc4@illinois.edu</p>
 		</div>
 	</div>
 </body>
@@ -169,18 +170,17 @@
 	};
 
 
-	// Data storage for easier access
+	// Data storage
 	var pctsByKey = [];
 	var curr_pcts;
 
 	// User settings
 	var USER_SEX = 'female';
 	var USER_AGEGRP = '1';
-	// var USER_DAY = 'weekday';
 	var USER_KEY = USER_SEX + USER_AGEGRP
 
 	var now = new Date();
-	var now_bin = now.getHours() * 2; // bin number, 30-minute bins
+	var now_bin = now.getHours() * 2; 
 	if (now.getMinutes() >= 30) {
 		now_bin += 1;
 	}
@@ -209,10 +209,8 @@
 	// scales and axes
 	var x = d3.scale.linear()
 		.range([0, width])
-		.domain([0, 1]); // hard-coding this because I know the data
+		.domain([0, 1]); 
 
-	// ordinal scales are easier for uniform bar heights
-	// I'll set domain and rangeBands after data loads
 	var y = d3.scale.ordinal();
 
 	var xAxis = d3.svg.axis()
@@ -228,7 +226,7 @@
 		.attr('transform', 'translate(' + [margin.left, margin.top] + ')');
 
 	// controls
-	var time_slider = d3.slider().min(0).max(47).ticks(0).stepValues(d3.range(0, 48)).value(USER_TIME);
+	var time_slider = d3.slider().min(0).max(47).ticks(48).stepValues(d3.range(0, 48)).value(USER_TIME);
 	time_slider.callback(brushed);
 	// time_slider.drag = play(USER_TIME);
 	
@@ -361,8 +359,7 @@
 		bars.append('rect')
 			.attr('class', 'percent')
 			.style("fill", "url(#gradient)")
-			.style("stroke", "url(#gradient)")
-			// .style('fill',colorScale(function (d) { return x(d["b" + USER_TIME]); }))
+			.style("stroke", "grey")
 			.attr('height', y.rangeBand())
 			.attr('width', function (d) { return x(d["b" + USER_TIME]); })
 			/*.on("mouseover", function () { return tooltip.style("visibility", "visible"); })*/
@@ -383,31 +380,36 @@
 
 		var pymChild = new pym.Child();
 
-	}); // @end d3.csv()
+	}); //csv
 
-	var clicked = false;
+
+	var mytimer = [];
 	function play() {
-		if (clicked == false) {
-			clicked = true;
-			for (let i = 0; i <= 47; i++) {
-				setTimeout(function timer() {
+		for (let i = 0; i <= mytimer.length; i++) {
+			clearTimeout(mytimer[i]);
+		}
+		for (let i = 0; i <= 47; i++) {
+			mytimer[i] = setTimeout(function timer() {
+				USER_TIME = i;
+				time_slider.destroy();
 
-					USER_TIME = i;
-					time_slider.destroy();
+				d3.select("#timeslider").call(time_slider);
+				time_slider.value(USER_TIME);
+				d3.select("#timevalue").text(binNumberToWords(USER_TIME));
+				update();
+			}, i * 2000);
+		}
+	}
 
-					d3.select("#timeslider").call(time_slider);
-					time_slider.value(USER_TIME);
-					d3.select("#timevalue").text(binNumberToWords(USER_TIME));
-					update();
-				}, i * 2000);
-			}
-			clicked = false;
+	function pause(){
+		for (let i = 0; i <= 47; i++) {
+			clearTimeout(mytimer[i]);
 		}
 	}
 
 	function mouseover(d) {
 		tooltip.style("visibility", "visible");
-	
+
 		tooltip.text(parseFloat(d["b" + USER_TIME]*100).toFixed(2) + "%")
 			.style("left", (d3.event.pageX + 50) + "px")
 			.style("top", (d3.event.pageY - 50) + "px");
@@ -439,6 +441,14 @@
 			.transition()
 			.duration(250)
 			.attr('width', function (d) { return x(d["b" + USER_TIME]); })
+			.each("end", updateOrder);
+
+		chart.selectAll('.bar')
+			.data(pctsByKey[USER_KEY])
+			.select(".background")
+			.transition()
+			.duration(250)
+			.attr('width', width )
 			.each("end", updateOrder);
 
 		d3.select("#note")
