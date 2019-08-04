@@ -103,8 +103,10 @@
 	var sexes = {
 		"female": "females",
 		"male": "males",
+		"both": "people"
 	};
 	var agegrps = {
+		"6": "all ages",
 		"0": "15 to 24",
 		"1": "25 to 34",
 		"2": "35 to 44",
@@ -174,8 +176,8 @@
 	var curr_pcts;
 
 	// User settings
-	var USER_SEX = 'female';
-	var USER_AGEGRP = '1';
+	var USER_SEX = 'both';
+	var USER_AGEGRP = '6';
 	var USER_KEY = USER_SEX + USER_AGEGRP
 
 	var now = new Date();
@@ -258,6 +260,7 @@
 			USER_SEX = d;
 			USER_KEY = USER_SEX + USER_AGEGRP;
 			sex_changed = true;
+			pause();
 			update();
 		});
 
@@ -282,6 +285,7 @@
 			USER_AGEGRP = d;
 			USER_KEY = USER_SEX + USER_AGEGRP;
 			sex_changed = true;
+			pause();
 			update();
 		
 		});
